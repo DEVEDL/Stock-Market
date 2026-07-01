@@ -72,7 +72,19 @@ Detailed analytical insights are compiled in [eda_summary.md](file:///c:/Stock%2
 - **Dividend King**: **Automobile** is the highest dividend-paying sector, with `HEROMOTOCO.NS` (1,613 INR cumulative) and `BAJAJ-AUTO.NS` (1,331 INR cumulative) leading the index.
 - **Valuation vs Volatility**: A positive correlation is observed between stock valuation multiples (P/E Ratio) and historical price volatility.
 
-*Check out the generated heatmaps, trend lines, and scatter plots in the [notebooks/images/](file:///c:/Stock%20Market/notebooks/images/) directory!*
+### 📊 Visualizations Gallery
+Here are some of the key analysis visualizations generated during the EDA phase:
+
+<p align="center">
+  <img src="notebooks/images/historical_nifty_trend.png" width="48%" alt="Historical Nifty 50 Trend" />
+  <img src="notebooks/images/correlation_heatmap.png" width="48%" alt="Correlation Heatmap" />
+</p>
+<p align="center">
+  <img src="notebooks/images/sector_average_returns.png" width="48%" alt="Sector Average Returns" />
+  <img src="notebooks/images/pe_vs_volatility.png" width="48%" alt="P/E Ratio vs Volatility" />
+</p>
+
+*All 6 generated plots can be viewed in the [notebooks/images/](file:///c:/Stock%20Market/notebooks/images/) directory.*
 
 ---
 
@@ -158,15 +170,7 @@ For immediate portfolio presentation, we provide an **interactive web dashboard*
 
 🔗 **Local Access**: [http://localhost:8000/powerbi/web/index.html](http://localhost:8000/powerbi/web/index.html) *(Requires running the local server script)*
 
-### How to Publish for Your Followers (GitHub Pages)
-Since this dashboard is built using standard HTML, CSS, and JS, you can host it for free using **GitHub Pages**:
-1. Push this project folder to a repository on **GitHub**.
-2. Go to the repository's **Settings** tab.
-3. In the left sidebar, click **Pages** (under the "Code and automation" section).
-4. Under **Build and deployment**, set the source to **Deploy from a branch**.
-5. Select your main branch (e.g., `main` or `master`) and folder (select `/ (root)`), then click **Save**.
-6. GitHub will generate a live URL (usually `https://DEVEDL.github.io/Stock-Market/`).
-7. The **Live Public Demo** link above will then be live and accessible to your followers!
+
 
 Features:
 - **Interactive Slicers**: Select Sector and Tickers dynamically.
