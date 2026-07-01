@@ -178,7 +178,21 @@ Features:
 - **Interactive Price Chart**: Displays chronological Close prices alongside 50-day and 200-day rolling averages, overlaid on daily trade volumes using **Chart.js**.
 - **Interactive Sector Analytics**: Horizontal bar chart reflecting returns dynamically.
 
-![Interactive Web Dashboard Screenshot](powerbi/mockups/web_dashboard_screenshot.png)
+### 📸 Live Dashboard Preview
+
+<p align="center">
+  <strong>1. Market Overview (with Interactive Treemap & 2x4 KPI Grid)</strong>
+  <br/>
+  <img src="powerbi/mockups/market_overview_treemap.png" width="95%" alt="Market Overview Dashboard" />
+</p>
+
+<br/>
+
+<p align="center">
+  <strong>2. Quant Research (with Strategy Backtester & Signals Ledger)</strong>
+  <br/>
+  <img src="powerbi/mockups/quant_research_dashboard.png" width="95%" alt="Quant Research Dashboard" />
+</p>
 
 ---
 
