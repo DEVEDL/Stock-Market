@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
         selectedTicker: 'ALL',
         selectedYear: 'ALL',
         selectedMonth: 'ALL',
+        quant: {},
+        selectedStrategy: 'SMA',
 
         // Chart instances
         charts: {
@@ -40,7 +42,8 @@ document.addEventListener('DOMContentLoaded', () => {
             maComparisonChart: null,
             riskScatterChart: null,
             sectorVolumeChart: null,
-            waterfallChart: null
+            waterfallChart: null,
+            equityCurveChart: null
         }
     };
 
@@ -50,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const yearFilter = document.getElementById('year-filter');
     const monthFilter = document.getElementById('month-filter');
     const resetFiltersBtn = document.getElementById('reset-filters');
+    const strategyFilter = document.getElementById('strategy-filter');
     const navItems = document.querySelectorAll('.nav-item');
     const tabScreens = document.querySelectorAll('.tab-screen');
     const pageTitle = document.getElementById('page-title');
@@ -69,6 +73,10 @@ document.addEventListener('DOMContentLoaded', () => {
         'risk-insights': {
             title: 'Risk & Analytical Insights',
             subtitle: 'Risk vs. Reward scatter matrices, monthly waterfall index returns, and technical signals'
+        },
+        'quant-research': {
+            title: 'Quantitative Strategy Research',
+            subtitle: 'Interactive strategy backtesting, technical indicator values, and trade ledger audits'
         }
     };
 
@@ -96,32 +104,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // Load web dataset
-    fetch('data.json')
-        .then(response => response.json())
-        .then(data => {
-            state.summary = data.summary;
-            state.historical = data.historical;
-            state.crossovers = data.crossovers || [];
-
-            // Extract unique metadata
-            state.sectors = [...new Set(data.summary.map(s => s.Sector))].sort();
-            state.companies = data.summary.map(s => ({ ticker: s.Ticker, name: s.Company_Name, sector: s.Sector }));
-
-            // Extract years
-            const yearsSet = new Set(data.historical.map(h => h.Date.substring(0, 4)));
-            state.years = [...yearsSet].sort().reverse(); // Show latest years first
-
-            // Initialize Dropdowns
-            initDropdowns();
-
-            // Render UI
-            updateAll();
+    // Load web datasets
+    Promise.all([
+        fetch('data.json').then(r => r.json()),
+        fetch('quant_data.json').then(r => r.json()).catch(err => {
+            console.error("Quant backtest data not found, will run without it.", err);
+            return {};
         })
-        .catch(err => {
-            console.error("Error loading web dataset:", err);
-            alert("Failed to load local web data. Please verify scripts/serve_dashboard.py completed successfully.");
-        });
+    ])
+    .then(([data, quantData]) => {
+        state.summary = data.summary;
+        state.historical = data.historical;
+        state.crossovers = data.crossovers || [];
+        state.quant = quantData;
+
+        // Extract unique metadata
+        state.sectors = [...new Set(data.summary.map(s => s.Sector))].sort();
+        state.companies = data.summary.map(s => ({ ticker: s.Ticker, name: s.Company_Name, sector: s.Sector }));
+
+        // Extract years
+        const yearsSet = new Set(data.historical.map(h => h.Date.substring(0, 4)));
+        state.years = [...yearsSet].sort().reverse(); // Show latest years first
+
+        // Initialize Dropdowns
+        initDropdowns();
+
+        // Render UI
+        updateAll();
+    })
+    .catch(err => {
+        console.error("Error loading web datasets:", err);
+        alert("Failed to load web data. Please verify scripts/serve_dashboard.py completed successfully.");
+    });
 
     // Populate Dropdowns
     function initDropdowns() {
@@ -175,16 +189,23 @@ document.addEventListener('DOMContentLoaded', () => {
             updateAll();
         });
 
+        strategyFilter.addEventListener('change', (e) => {
+            state.selectedStrategy = e.target.value;
+            updateAll();
+        });
+
         resetFiltersBtn.addEventListener('click', () => {
             sectorFilter.value = 'ALL';
             tickerFilter.value = 'ALL';
             yearFilter.value = 'ALL';
             monthFilter.value = 'ALL';
+            strategyFilter.value = 'SMA';
 
             state.selectedSector = 'ALL';
             state.selectedTicker = 'ALL';
             state.selectedYear = 'ALL';
             state.selectedMonth = 'ALL';
+            state.selectedStrategy = 'SMA';
 
             populateCompanyDropdown();
             updateAll();
@@ -269,6 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (tab === 'risk-insights') {
             renderP3Charts(summary, historical);
             renderMetricsMatrixTable(summary);
+        } else if (tab === 'quant-research') {
+            updateQuantDashboard();
         }
     }
 
@@ -330,7 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderP1Charts(summary, historical) {
         renderTrendChart(historical);
-        renderSectorDonutChart(summary);
+        renderSectorTreemap(summary);
         renderMonthlyAverageChart(historical);
         renderVolumeTrendChart(historical);
     }
@@ -457,12 +480,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Chart 2: Sector Distribution Donut Chart
-    function renderSectorDonutChart(summary) {
-        if (state.charts.sectorDonutChart) state.charts.sectorDonutChart.destroy();
+    // Chart 2: Sector Distribution Treemap
+    function renderSectorTreemap(summary) {
+        const container = document.getElementById('sectorTreemapContainer');
+        if (!container) return;
 
-        const canvas = document.getElementById('sectorDonutChart');
-        if (!canvas) return;
+        container.innerHTML = '';
 
         // Group company count by sector
         const sectorCounts = {};
@@ -470,34 +493,122 @@ document.addEventListener('DOMContentLoaded', () => {
             sectorCounts[s.Sector] = (sectorCounts[s.Sector] || 0) + 1;
         });
 
-        const labels = Object.keys(sectorCounts).sort();
-        const data = labels.map(sec => sectorCounts[sec]);
+        // Map to sorted list of { name, weight }
+        const total = summary.length;
+        const data = Object.keys(sectorCounts).map(sec => ({
+            name: sec,
+            weight: sectorCounts[sec]
+        })).sort((a, b) => b.weight - a.weight);
 
-        const ctx = canvas.getContext('2d');
-        state.charts.sectorDonutChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: ['#06d6a0', '#4cc9f0', '#f72585', '#ffd166', '#007aff', '#8338ec', '#ff5a5f', '#e07a5f', '#a8dadc', '#457b9d', '#1d3557', '#b5179e', '#7209b7'],
-                    borderWidth: 1,
-                    borderColor: 'rgba(7, 21, 40, 0.6)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'right',
-                        labels: { color: '#8a9fb4', font: { size: 10 } }
-                    },
-                    tooltip: { backgroundColor: '#071528', padding: 10 }
-                },
-                cutout: '70%'
+        if (data.length === 0) {
+            container.innerHTML = '<div style="color:var(--text-secondary); text-align:center; padding:20px; font-size:12px;">No sector data available</div>';
+            return;
+        }
+
+        // Layout the treemap in 100% width and 100% height coordinates
+        const rects = layoutTreemap(data, 100, 100);
+
+        // Curried professional color palettes for sectors
+        const colors = [
+            'linear-gradient(135deg, rgba(6, 214, 160, 0.25) 0%, rgba(6, 214, 160, 0.05) 100%)', // Bullish Green
+            'linear-gradient(135deg, rgba(76, 201, 240, 0.25) 0%, rgba(76, 201, 240, 0.05) 100%)', // Cyan
+            'linear-gradient(135deg, rgba(247, 37, 133, 0.25) 0%, rgba(247, 37, 133, 0.05) 100%)', // Magenta/Pink
+            'linear-gradient(135deg, rgba(255, 209, 102, 0.25) 0%, rgba(255, 209, 102, 0.05) 100%)', // Gold/Yellow
+            'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.05) 100%)',  // Blue
+            'linear-gradient(135deg, rgba(131, 56, 236, 0.25) 0%, rgba(131, 56, 236, 0.05) 100%)', // Purple
+            'linear-gradient(135deg, rgba(255, 90, 95, 0.25) 0%, rgba(255, 90, 95, 0.05) 100%)',  // Coral Red
+            'linear-gradient(135deg, rgba(224, 122, 95, 0.25) 0%, rgba(224, 122, 95, 0.05) 100%)',  // Terracotta
+            'linear-gradient(135deg, rgba(168, 218, 220, 0.25) 0%, rgba(168, 218, 220, 0.05) 100%)', // Powder Blue
+            'linear-gradient(135deg, rgba(69, 123, 157, 0.25) 0%, rgba(69, 123, 157, 0.05) 100%)'  // Slate Blue
+        ];
+
+        const borders = [
+            'rgba(6, 214, 160, 0.4)',
+            'rgba(76, 201, 240, 0.4)',
+            'rgba(247, 37, 133, 0.4)',
+            'rgba(255, 209, 102, 0.4)',
+            'rgba(0, 122, 255, 0.4)',
+            'rgba(131, 56, 236, 0.4)',
+            'rgba(255, 90, 95, 0.4)',
+            'rgba(224, 122, 95, 0.4)',
+            'rgba(168, 218, 220, 0.4)',
+            'rgba(69, 123, 157, 0.4)'
+        ];
+
+        rects.forEach((r, idx) => {
+            const pct = ((r.item.weight / total) * 100).toFixed(1);
+            const cell = document.createElement('div');
+            cell.className = 'treemap-cell';
+
+            const color = colors[idx % colors.length];
+            const border = borders[idx % borders.length];
+
+            cell.style.left = `${r.x}%`;
+            cell.style.top = `${r.y}%`;
+            cell.style.width = `${r.w}%`;
+            cell.style.height = `${r.h}%`;
+            cell.style.background = color;
+            cell.style.borderColor = border;
+            cell.style.borderStyle = 'solid';
+            cell.style.borderWidth = '1px';
+
+            cell.title = `${r.item.name}: ${r.item.weight} companies (${pct}%)`;
+
+            const isSmall = r.w < 12 || r.h < 12;
+            const isTiny = r.w < 8 || r.h < 8;
+
+            if (isTiny) {
+                // Too small, render nothing inside
+            } else if (isSmall) {
+                cell.innerHTML = `
+                    <span class="sector-name" style="font-size: 9px;">${r.item.name.substring(0, 5)}...</span>
+                `;
+            } else {
+                cell.innerHTML = `
+                    <span class="sector-name">${r.item.name}</span>
+                    <span class="sector-val">${pct}%</span>
+                    <span class="sector-count">${r.item.weight} Co.</span>
+                `;
             }
+
+            // Click filters sector!
+            cell.addEventListener('click', () => {
+                state.selectedSector = r.item.name;
+                state.selectedTicker = 'ALL';
+                sectorFilter.value = r.item.name;
+                populateCompanyDropdown();
+                updateAll();
+            });
+
+            container.appendChild(cell);
         });
+    }
+
+    // Helper: Treemap Slice-and-Dice layout generator
+    function layoutTreemap(data, width, height) {
+        let x = 0, y = 0, w = width, h = height;
+        const result = [];
+
+        for (let i = 0; i < data.length; i++) {
+            const item = data[i];
+            const remainingWeight = data.slice(i).reduce((acc, curr) => acc + curr.weight, 0);
+            if (remainingWeight === 0) break;
+
+            const ratio = item.weight / remainingWeight;
+
+            if (w > h) {
+                const sliceW = w * ratio;
+                result.push({ x: x, y: y, w: sliceW, h: h, item: item });
+                x += sliceW;
+                w -= sliceW;
+            } else {
+                const sliceH = h * ratio;
+                result.push({ x: x, y: y, w: w, h: sliceH, item: item });
+                y += sliceH;
+                h -= sliceH;
+            }
+        }
+        return result;
     }
 
     // Chart 3: Monthly Average Closing Price (Column Chart)
@@ -1299,6 +1410,232 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="crossover-date">${c.Date}</div>
             `;
             crossoverAlertsList.appendChild(item);
+        });
+    }
+
+    // ==========================================
+    // PAGE 4: QUANTITATIVE RESEARCH LOGIC
+    // ==========================================
+    function updateQuantDashboard() {
+        let ticker = state.selectedTicker;
+        if (ticker === 'ALL') {
+            // Find first available ticker
+            ticker = Object.keys(state.quant)[0] || (state.summary.length > 0 ? state.summary[0].Ticker : '');
+        }
+
+        if (!ticker || !state.quant[ticker]) {
+            console.warn("No quant data available for ticker:", ticker);
+            return;
+        }
+
+        const tickerData = state.quant[ticker];
+        const strategy = state.selectedStrategy;
+        const stratData = tickerData.strategies[strategy];
+
+        if (!stratData) return;
+
+        // 1. Update KPI Cards
+        const metrics = stratData.metrics;
+        document.getElementById('p4-kpi-return').textContent = `${metrics.annualized_return >= 0 ? '+' : ''}${metrics.annualized_return.toFixed(2)}%`;
+        
+        const sharpeEl = document.getElementById('p4-kpi-sharpe');
+        sharpeEl.textContent = metrics.sharpe_ratio.toFixed(2);
+        sharpeEl.className = `kpi-value ${metrics.sharpe_ratio >= 0 ? 'positive' : 'negative'}`;
+        
+        document.getElementById('p4-kpi-drawdown').textContent = `${metrics.max_drawdown.toFixed(2)}%`;
+        document.getElementById('p4-kpi-winrate').textContent = `${metrics.win_rate.toFixed(1)}%`;
+        document.getElementById('p4-kpi-profitfactor').textContent = metrics.profit_factor.toFixed(2);
+        document.getElementById('p4-kpi-trades').textContent = metrics.total_trades;
+
+        // 2. Render Equity Curve Chart
+        renderEquityCurveChart(stratData.equity_curve, ticker, strategy);
+
+        // 3. Render Technical Indicators
+        renderTechnicalIndicators(tickerData.indicators, ticker);
+
+        // 4. Render Trade Ledger
+        renderTradeLedger(stratData.trades);
+    }
+
+    function renderEquityCurveChart(equityData, ticker, strategy) {
+        if (state.charts.equityCurveChart) state.charts.equityCurveChart.destroy();
+
+        const canvas = document.getElementById('equityCurveChart');
+        if (!canvas) return;
+
+        const labels = equityData.map(d => d.Date);
+        const stratReturns = equityData.map(d => d.Strategy);
+        const stockReturns = equityData.map(d => d.Benchmark);
+
+        const ctx = canvas.getContext('2d');
+        state.charts.equityCurveChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: `Strategy: ${strategy} Crossover`,
+                        data: stratReturns,
+                        borderColor: '#06D6A0',
+                        backgroundColor: 'rgba(6, 214, 160, 0.05)',
+                        borderWidth: 2,
+                        pointRadius: 0,
+                        fill: true,
+                        tension: 0.1
+                    },
+                    {
+                        label: `Buy & Hold: ${ticker}`,
+                        data: stockReturns,
+                        borderColor: '#4CC9F0',
+                        backgroundColor: 'transparent',
+                        borderWidth: 1.5,
+                        pointRadius: 0,
+                        borderDash: [5, 5],
+                        fill: false,
+                        tension: 0.1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#F5F5F7',
+                            font: { family: 'Outfit' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: '#071528',
+                        padding: 10,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.raw.toFixed(2)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.03)'
+                        },
+                        ticks: {
+                            color: '#8E8E93',
+                            maxTicksLimit: 12,
+                            font: { family: 'Outfit', size: 10 }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)'
+                        },
+                        ticks: {
+                            color: '#8E8E93',
+                            callback: function(value) {
+                                return value >= 0 ? `+${value}%` : `${value}%`;
+                            },
+                            font: { family: 'Outfit', size: 10 }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderTechnicalIndicators(indicators, ticker) {
+        // 1. RSI Gauge
+        const rsi = indicators.RSI;
+        document.getElementById('rsi-gauge-value').textContent = rsi.toFixed(1);
+        const rsiBar = document.getElementById('rsi-gauge-bar');
+        rsiBar.style.width = `${Math.min(Math.max(rsi, 0), 100)}%`;
+        
+        if (rsi < 30) {
+            rsiBar.style.background = 'var(--bullish-green)';
+        } else if (rsi > 70) {
+            rsiBar.style.background = 'var(--bearish-red)';
+        } else {
+            rsiBar.style.background = 'linear-gradient(90deg, var(--bearish-red) 0%, var(--accent-cyan) 50%, var(--bullish-green) 100%)';
+        }
+
+        // 2. Bollinger Bands
+        const stock = state.summary.find(s => s.Ticker === ticker);
+        const currentPrice = stock ? stock.Ending_Price : indicators.BB_Middle;
+        const low = indicators.BB_Lower;
+        const high = indicators.BB_Upper;
+        
+        document.getElementById('bb-lower-value').textContent = `Low: ₹${low.toLocaleString(undefined, {maximumFractionDigits: 1})}`;
+        document.getElementById('bb-upper-value').textContent = `High: ₹${high.toLocaleString(undefined, {maximumFractionDigits: 1})}`;
+        
+        let positionPercent = 50;
+        if (high - low > 0) {
+            positionPercent = ((currentPrice - low) / (high - low)) * 100;
+            positionPercent = Math.min(Math.max(positionPercent, 0), 100);
+        }
+        document.getElementById('bb-marker').style.left = `${positionPercent}%`;
+        
+        const bbStatus = document.getElementById('bb-current-status');
+        if (currentPrice <= low) {
+            bbStatus.textContent = "Oversold (BB Low)";
+            bbStatus.className = "positive";
+        } else if (currentPrice >= high) {
+            bbStatus.textContent = "Overbought (BB High)";
+            bbStatus.className = "negative";
+        } else {
+            bbStatus.textContent = `Neutral (₹${currentPrice.toLocaleString(undefined, {maximumFractionDigits: 1})})`;
+            bbStatus.className = "";
+        }
+
+        // 3. MACD
+        document.getElementById('macd-line-val').textContent = indicators.MACD.toFixed(2);
+        document.getElementById('macd-sig-val').textContent = indicators.MACD_Signal.toFixed(2);
+        
+        const macdStatus = document.getElementById('macd-status');
+        const hist = indicators.MACD_Hist;
+        if (hist > 0) {
+            macdStatus.textContent = "Bullish Momentum";
+            macdStatus.className = "macd-status-badge bullish";
+        } else if (hist < 0) {
+            macdStatus.textContent = "Bearish Momentum";
+            macdStatus.className = "macd-status-badge bearish";
+        } else {
+            macdStatus.textContent = "Neutral";
+            macdStatus.className = "macd-status-badge neutral";
+        }
+    }
+
+    function renderTradeLedger(trades) {
+        const tbody = document.getElementById('quant-trades-tbody');
+        if (!tbody) return;
+
+        tbody.innerHTML = '';
+
+        if (!trades || trades.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No trades generated for this strategy window</td></tr>';
+            return;
+        }
+
+        const displayTrades = [...trades].reverse();
+
+        displayTrades.forEach(t => {
+            const tr = document.createElement('tr');
+            const retClass = t.return_pct >= 0 ? 'positive' : 'negative';
+            const retSign = t.return_pct >= 0 ? '+' : '';
+
+            tr.innerHTML = `
+                <td>${t.entry_date}</td>
+                <td>${t.exit_date}</td>
+                <td>₹${t.entry_price.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                <td>₹${t.exit_price.toLocaleString(undefined, {minimumFractionDigits: 1, maximumFractionDigits: 1})}</td>
+                <td class="${retClass} font-mono"><strong>${retSign}${t.return_pct.toFixed(2)}%</strong></td>
+            `;
+            tbody.appendChild(tr);
         });
     }
 

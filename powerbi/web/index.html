@@ -34,6 +34,10 @@
                     <span class="nav-icon">⚡</span>
                     <span>Risk & Insights</span>
                 </button>
+                <button class="nav-item" data-tab="quant-research">
+                    <span class="nav-icon">🔬</span>
+                    <span>Quant Research</span>
+                </button>
             </nav>
             <div class="sidebar-footer">
                 <p>Interactive Mockup</p>
@@ -92,7 +96,7 @@
                 <!-- PAGE 1: MARKET OVERVIEW -->
                 <section id="tab-market-overview" class="tab-screen active">
                     <!-- Page 1 KPI Grid -->
-                    <div class="kpi-grid">
+                    <div class="kpi-grid kpi-grid-2x4">
                         <div class="kpi-card">
                             <div class="kpi-header">
                                 <span>Total Companies</span>
@@ -174,10 +178,10 @@
                         <!-- Chart 2: Sector Distribution -->
                         <div class="chart-card">
                             <div class="chart-header">
-                                <h3>Sector Distribution</h3>
+                                <h3>Sector Distribution (Treemap)</h3>
                             </div>
-                            <div class="canvas-wrapper">
-                                <canvas id="sectorDonutChart"></canvas>
+                            <div class="treemap-container" id="sectorTreemapContainer">
+                                <!-- Rendered dynamically -->
                             </div>
                         </div>
 
@@ -396,6 +400,152 @@
                                     <!-- Rendered dynamically -->
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 4: QUANTITATIVE RESEARCH & BACKTESTER -->
+                <section id="tab-quant-research" class="tab-screen">
+                    <!-- Page 4 Strategy Selection Controls -->
+                    <div class="quant-controls-bar">
+                        <div class="slicer-item">
+                            <label for="strategy-filter" style="color: var(--text-secondary); font-size: 11px; margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px;">Quant Trading Strategy</label>
+                            <select id="strategy-filter" class="quant-select" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); color: var(--text-primary); padding: 8px 12px; border-radius: 6px; font-family: inherit; font-size: 13px; width: 300px; outline: none; cursor: pointer;">
+                                <option value="SMA">SMA Crossover (Golden/Death Cross)</option>
+                                <option value="RSI">RSI Mean Reversion (30-70 Bounds)</option>
+                                <option value="BB">Bollinger Bands Mean Reversion</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Page 4 KPI Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Annualized Return</span>
+                                <span class="kpi-icon">📈</span>
+                            </div>
+                            <div class="kpi-value highlight" id="p4-kpi-return">0.00%</div>
+                            <div class="kpi-subtext">Compounded yearly</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Sharpe Ratio</span>
+                                <span class="kpi-icon">⚖️</span>
+                            </div>
+                            <div class="kpi-value positive" id="p4-kpi-sharpe">0.00</div>
+                            <div class="kpi-subtext">6.0% risk-free rate</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Maximum Drawdown</span>
+                                <span class="kpi-icon">📉</span>
+                            </div>
+                            <div class="kpi-value negative" id="p4-kpi-drawdown">0.00%</div>
+                            <div class="kpi-subtext">Peak-to-trough drop</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Win Rate</span>
+                                <span class="kpi-icon">🏆</span>
+                            </div>
+                            <div class="kpi-value" id="p4-kpi-winrate">0.00%</div>
+                            <div class="kpi-subtext">Profitable trades</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Profit Factor</span>
+                                <span class="kpi-icon">💰</span>
+                            </div>
+                            <div class="kpi-value" id="p4-kpi-profitfactor">0.00</div>
+                            <div class="kpi-subtext">Gross win / gross loss</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Total Trades</span>
+                                <span class="kpi-icon">🔄</span>
+                            </div>
+                            <div class="kpi-value" id="p4-kpi-trades">0</div>
+                            <div class="kpi-subtext">Completed signals</div>
+                        </div>
+                    </div>
+
+                    <!-- Page 4 Visuals & Signals Split -->
+                    <div class="quant-dashboard-grid">
+                        <!-- Chart: Equity Curve -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Cumulative Performance: Strategy vs. Stock Buy-and-Hold</h3>
+                            </div>
+                            <div class="canvas-wrapper" style="height: 320px; position: relative;">
+                                <canvas id="equityCurveChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Technical Indicators Gauge Card -->
+                        <div class="insights-card quant-signals-card">
+                            <h3>🔬 Technical Signal Indicators</h3>
+                            <p class="card-desc">Current state of indicators for selected company</p>
+                            <div class="gauge-container">
+                                <div class="gauge-item">
+                                    <span class="gauge-label">Relative Strength Index (RSI-14)</span>
+                                    <div class="gauge-bar-outer">
+                                        <div class="gauge-bar-inner rsi-color" id="rsi-gauge-bar" style="width: 50%;"></div>
+                                        <div class="gauge-threshold-line" style="left: 30%;"></div>
+                                        <div class="gauge-threshold-line" style="left: 70%;"></div>
+                                    </div>
+                                    <div class="gauge-values">
+                                        <span>Oversold (30)</span>
+                                        <strong id="rsi-gauge-value">50.0</strong>
+                                        <span>Overbought (70)</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="gauge-item">
+                                    <span class="gauge-label">Bollinger Bands (20, 2)</span>
+                                    <div class="bb-status-indicator">
+                                        <div class="bb-value-marker" id="bb-marker" style="left: 50%;"></div>
+                                    </div>
+                                    <div class="gauge-values">
+                                        <span id="bb-lower-value">Low: ₹0</span>
+                                        <strong id="bb-current-status">Neutral</strong>
+                                        <span id="bb-upper-value">High: ₹0</span>
+                                    </div>
+                                </div>
+
+                                <div class="gauge-item">
+                                    <span class="gauge-label">MACD (12, 26, 9) Momentum</span>
+                                    <div class="macd-momentum-container">
+                                        <span class="macd-text-sig">MACD Line: <strong id="macd-line-val">0.00</strong></span>
+                                        <span class="macd-text-sig">Signal Line: <strong id="macd-sig-val">0.00</strong></span>
+                                        <div class="macd-status-badge" id="macd-status">Neutral</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Page 4 Trade Ledger -->
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Quantitative Simulated Trades Ledger</h3>
+                            <span style="font-size: 11px; color: var(--text-secondary);">Last 15 completed trade signals</span>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="quant-trades-table" class="matrix-table">
+                                <thead>
+                                    <tr>
+                                        <th>Entry Date</th>
+                                        <th>Exit Date</th>
+                                        <th>Entry Price</th>
+                                        <th>Exit Price</th>
+                                        <th>Return %</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="quant-trades-tbody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </section>

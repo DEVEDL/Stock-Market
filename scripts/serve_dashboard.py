@@ -141,4 +141,13 @@ def start_server():
 
 if __name__ == "__main__":
     generate_web_data()
+    
+    # Generate quant backtest data
+    try:
+        import subprocess
+        print("Running quant strategy backtester...")
+        subprocess.run(["python", "scripts/quant_backtester.py"], check=True)
+    except Exception as e:
+        print("Error running quant backtester:", e)
+        
     start_server()
