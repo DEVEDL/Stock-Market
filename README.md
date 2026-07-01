@@ -22,7 +22,7 @@ graph TD
 - **Database Schema**: [schema.sql](file:///c:/Stock%20Market/sql/schema.sql)
 - **Business SQL Queries**: [business_queries.sql](file:///c:/Stock%20Market/sql/business_queries.sql)
 - **SQL Driver Script**: [run_queries.py](file:///c:/Stock%20Market/sql/run_queries.py)
-- **Interactive Web Dashboard**: [Live Demo](https://<your-username>.github.io/<your-repo-name>/powerbi/web/index.html) (or [Local Link](http://localhost:8000/powerbi/web/index.html) when served locally)
+- **Interactive Web Dashboard**: [Live Demo](https://DEVEDL.github.io/Stock-Market/powerbi/web/index.html) (or [Local Link](http://localhost:8000/powerbi/web/index.html) when served locally)
 
 ---
 
@@ -154,8 +154,7 @@ Designed in a **Glassmorphic Dark Theme** (deep navy backdrop `#121214` and slat
 ## 🖥️ Interactive Web Dashboard
 For immediate portfolio presentation, we provide an **interactive web dashboard** that replicates the Power BI dashboard layout.
 
-🔗 **Live Public Demo**: [https://<your-username>.github.io/<your-repo-name>/powerbi/web/index.html](https://<your-username>.github.io/<your-repo-name>/powerbi/web/index.html)  
-*(Note: Replace `<your-username>` and `<your-repo-name>` with your GitHub details once published to GitHub Pages.)*
+🔗 **Live Public Demo**: [https://DEVEDL.github.io/Stock-Market/powerbi/web/index.html](https://DEVEDL.github.io/Stock-Market/powerbi/web/index.html)
 
 🔗 **Local Access**: [http://localhost:8000/powerbi/web/index.html](http://localhost:8000/powerbi/web/index.html) *(Requires running the local server script)*
 
@@ -166,8 +165,8 @@ Since this dashboard is built using standard HTML, CSS, and JS, you can host it 
 3. In the left sidebar, click **Pages** (under the "Code and automation" section).
 4. Under **Build and deployment**, set the source to **Deploy from a branch**.
 5. Select your main branch (e.g., `main` or `master`) and folder (select `/ (root)`), then click **Save**.
-6. GitHub will generate a live URL (usually `https://<your-username>.github.io/<your-repo-name>/`).
-7. Update the **Live Public Demo** link above with your actual GitHub username and repository name so your followers can access it!
+6. GitHub will generate a live URL (usually `https://DEVEDL.github.io/Stock-Market/`).
+7. The **Live Public Demo** link above will then be live and accessible to your followers!
 
 Features:
 - **Interactive Slicers**: Select Sector and Tickers dynamically.
