@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nifty 50 Stock Market Analytics Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="logo-area">
+                <span class="logo-icon">📊</span>
+                <h2>Nifty50 Analyst</h2>
+            </div>
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="market-overview">
+                    <span class="nav-icon">📈</span>
+                    <span>Market Overview</span>
+                </button>
+                <button class="nav-item" data-tab="stock-performance">
+                    <span class="nav-icon">🏆</span>
+                    <span>Stock Performance</span>
+                </button>
+                <button class="nav-item" data-tab="risk-insights">
+                    <span class="nav-icon">⚡</span>
+                    <span>Risk & Insights</span>
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <p>Interactive Mockup</p>
+                <span class="badge">Nifty 50 Index</span>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="main-header">
+                <div class="header-title">
+                    <h1 id="page-title">Market Overview (Executive Dashboard)</h1>
+                    <p id="page-subtitle">Historical Nifty 50 index performance summary</p>
+                </div>
+                <div class="header-actions">
+                    <span class="status-indicator online"></span>
+                    <span class="server-text">Local server connected</span>
+                </div>
+            </header>
+
+            <!-- Slicers Bar (Available globally across pages) -->
+            <div class="slicers-bar">
+                <div class="slicer-item">
+                    <label for="sector-filter">Sector</label>
+                    <select id="sector-filter">
+                        <option value="ALL">All Sectors</option>
+                    </select>
+                </div>
+                <div class="slicer-item">
+                    <label for="ticker-filter">Company</label>
+                    <select id="ticker-filter">
+                        <option value="ALL">All Companies</option>
+                    </select>
+                </div>
+                <div class="slicer-item">
+                    <label for="year-filter">Year</label>
+                    <select id="year-filter">
+                        <option value="ALL">All Years</option>
+                    </select>
+                </div>
+                <div class="slicer-item">
+                    <label for="month-filter">Month</label>
+                    <select id="month-filter">
+                        <option value="ALL">All Months</option>
+                    </select>
+                </div>
+                <div class="slicer-item reset-btn-container">
+                    <button id="reset-filters" class="btn-secondary">Reset Filters</button>
+                </div>
+            </div>
+
+            <!-- Content Body -->
+            <div class="content-body">
+                
+                <!-- PAGE 1: MARKET OVERVIEW -->
+                <section id="tab-market-overview" class="tab-screen active">
+                    <!-- Page 1 KPI Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Total Companies</span>
+                                <span class="kpi-icon">🏢</span>
+                            </div>
+                            <div class="kpi-value highlight" id="p1-kpi-companies">0</div>
+                            <div class="kpi-subtext">Active listings</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Trading Days</span>
+                                <span class="kpi-icon">📅</span>
+                            </div>
+                            <div class="kpi-value" id="p1-kpi-days">0</div>
+                            <div class="kpi-subtext">Distinct dates recorded</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Latest Close Price</span>
+                                <span class="kpi-icon">💰</span>
+                            </div>
+                            <div class="kpi-value" id="p1-kpi-latest-close">₹0.00</div>
+                            <div class="kpi-subtext">Last traded price</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Avg Close Price</span>
+                                <span class="kpi-icon">⚖️</span>
+                            </div>
+                            <div class="kpi-value" id="p1-kpi-avg-close">₹0.00</div>
+                            <div class="kpi-subtext">Average close price</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Highest Close</span>
+                                <span class="kpi-icon">📈</span>
+                            </div>
+                            <div class="kpi-value positive" id="p1-kpi-highest-close">₹0.00</div>
+                            <div class="kpi-subtext">Max recorded close</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Lowest Close</span>
+                                <span class="kpi-icon">📉</span>
+                            </div>
+                            <div class="kpi-value negative" id="p1-kpi-lowest-close">₹0.00</div>
+                            <div class="kpi-subtext">Min recorded close</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Total Volume</span>
+                                <span class="kpi-icon">💼</span>
+                            </div>
+                            <div class="kpi-value highlight" id="p1-kpi-volume">0</div>
+                            <div class="kpi-subtext">Shares traded</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Avg Daily Return</span>
+                                <span class="kpi-icon">🔄</span>
+                            </div>
+                            <div class="kpi-value" id="p1-kpi-return">0.00%</div>
+                            <div class="kpi-subtext">Average daily change</div>
+                        </div>
+                    </div>
+
+                    <!-- Page 1 Visuals Grid -->
+                    <div class="dashboard-grid-2x2">
+                        <!-- Chart 1: Closing Price Trend -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Closing Price Trend</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="trendChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Sector Distribution -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Sector Distribution</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="sectorDonutChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 3: Monthly Average Closing Price -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Monthly Average Closing Price</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="monthlyAverageChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 4: Volume Trend -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Volume Trend</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="volumeTrendChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 2: STOCK PERFORMANCE ANALYSIS -->
+                <section id="tab-stock-performance" class="tab-screen">
+                    <!-- Page 2 KPI Grid -->
+                    <div class="kpi-grid kpi-grid-4">
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Highest Return</span>
+                                <span class="kpi-icon">🚀</span>
+                            </div>
+                            <div class="kpi-value positive" id="p2-kpi-highest-return">0.0%</div>
+                            <div class="kpi-subtext" id="p2-kpi-highest-return-stock">Ticker</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Lowest Return</span>
+                                <span class="kpi-icon">⚠️</span>
+                            </div>
+                            <div class="kpi-value negative" id="p2-kpi-lowest-return">0.0%</div>
+                            <div class="kpi-subtext" id="p2-kpi-lowest-return-stock">Ticker</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Most Volatile Stock</span>
+                                <span class="kpi-icon">⚡</span>
+                            </div>
+                            <div class="kpi-value highlight" id="p2-kpi-volatile-stock">Ticker</div>
+                            <div class="kpi-subtext" id="p2-kpi-volatile-value">0.00% Volatility</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-header">
+                                <span>Best Performing Sector</span>
+                                <span class="kpi-icon">🏆</span>
+                            </div>
+                            <div class="kpi-value positive" id="p2-kpi-best-sector">Sector</div>
+                            <div class="kpi-subtext" id="p2-kpi-best-sector-return">0.0% Avg Return</div>
+                        </div>
+                    </div>
+
+                    <!-- Page 2 Visuals Grid -->
+                    <div class="dashboard-grid-2x2">
+                        <!-- Chart 1: Top 10 Stocks by Return -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Top 10 Stocks by Return</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="topReturnChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Bottom 10 Stocks -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Bottom 10 Stocks</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="bottomReturnChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 3: Average Volume by Company -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3>Average Volume by Company</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="avgVolumeChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Chart 4: Moving Average vs Closing Price -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h3 id="ma-comparison-title">Moving Average vs Closing Price</h3>
+                            </div>
+                            <div class="canvas-wrapper">
+                                <canvas id="maComparisonChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Heatmap Grid Section -->
+                    <div class="table-container">
+                        <div class="table-header">
+                            <h3>Average Return % Heatmap (Company vs Month)</h3>
+                            <span class="legend-colorclose-color" style="font-size: 11px; color: var(--text-secondary);">Color coding reflects monthly return levels</span>
+                        </div>
+                        <div class="table-scroll">
+                            <table id="heatmap-table" class="matrix-table">
+                                <thead>
+                                    <!-- Rendered dynamically -->
+                                </thead>
+                                <tbody>
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- PAGE 3: RISK & INSIGHTS -->
+                <section id="tab-risk-insights" class="tab-screen">
+                    <div class="viz-grid-p3">
+                        <!-- Left Panel: Main Charts -->
+                        <div class="p3-charts-panel">
+                            <!-- Chart 1: Scatter Plot -->
+                            <div class="chart-card">
+                                <div class="chart-header">
+                                    <h3>Risk/Reward Valuation: Average Volume vs Return %</h3>
+                                </div>
+                                <div class="canvas-wrapper">
+                                    <canvas id="riskScatterChart"></canvas>
+                                </div>
+                            </div>
+
+                            <!-- Row for Sector Volume Bar and Waterfall -->
+                            <div class="dashboard-grid-1x2">
+                                <div class="chart-card">
+                                    <div class="chart-header">
+                                        <h3>Sector Allocation by Volume</h3>
+                                    </div>
+                                    <div class="canvas-wrapper">
+                                        <canvas id="sectorVolumeChart"></canvas>
+                                    </div>
+                                </div>
+
+                                <div class="chart-card">
+                                    <div class="chart-header">
+                                        <h3>Waterfall: Index Monthly Returns</h3>
+                                    </div>
+                                    <div class="canvas-wrapper">
+                                        <canvas id="waterfallChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Metrics Matrix Table -->
+                            <div class="table-container">
+                                <div class="table-header">
+                                    <h3>Nifty 50 Company Performance Matrix</h3>
+                                </div>
+                                <div class="table-scroll">
+                                    <table id="metrics-matrix-table" class="matrix-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Company</th>
+                                                <th>Avg Close Price</th>
+                                                <th>Avg Daily Return</th>
+                                                <th>Avg Daily Volume</th>
+                                                <th>Historical Volatility</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Rendered dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Panel: Key Insights & Technical Signals -->
+                        <div class="p3-sidebar-panel">
+                            <!-- Key Insights Card -->
+                            <div class="insights-card">
+                                <h3>💡 Key Insights</h3>
+                                <div class="insights-list">
+                                    <div class="insight-item">
+                                        <div class="insight-bullet">1</div>
+                                        <div class="insight-text"><strong>Automobile sector</strong> generated the highest average cumulative stock returns.</div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <div class="insight-bullet">2</div>
+                                        <div class="insight-text"><strong>Financials sector</strong> accounted for the highest cumulative trading volumes.</div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <div class="insight-bullet">3</div>
+                                        <div class="insight-text"><strong>Pharma sector</strong> demonstrated the lowest overall price volatility.</div>
+                                    </div>
+                                    <div class="insight-item">
+                                        <div class="insight-bullet">4</div>
+                                        <div class="insight-text"><strong>Peak market activity</strong> and highest average prices occurred in <strong>2021</strong>.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Crossover Alerts Card -->
+                            <div class="insights-card crossover-card">
+                                <h3>⚡ Recent Technical Crossovers</h3>
+                                <p class="card-desc">Golden/Death crossovers detected in Nifty 50 historical database</p>
+                                <div class="crossover-list" id="crossover-alerts-list">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
